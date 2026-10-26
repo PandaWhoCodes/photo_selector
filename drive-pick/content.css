@@ -28,7 +28,8 @@
   z-index: 2147483647;
 }
 
-#dpp-btn {
+#dpp-btn,
+#dpp-filter-btn {
   display: none;
   pointer-events: auto;
   align-items: center;
@@ -46,23 +47,32 @@
   transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
 }
 #dpp-root.dpp-visible #dpp-btn { display: inline-flex; }
-#dpp-btn:hover { border-color: #1e7a4f; }
-#dpp-btn:active { transform: scale(0.97); }
-#dpp-btn:focus-visible { outline: 3px solid #8fd3b2; outline-offset: 2px; }
+#dpp-root.dpp-folder-visible #dpp-filter-btn { display: inline-flex; }
+#dpp-btn:hover,
+#dpp-filter-btn:hover { border-color: #1e7a4f; }
+#dpp-btn:active,
+#dpp-filter-btn:active { transform: scale(0.97); }
+#dpp-btn:focus-visible,
+#dpp-filter-btn:focus-visible { outline: 3px solid #8fd3b2; outline-offset: 2px; }
 
-#dpp-btn .dpp-check { display: inline-flex; }
+#dpp-btn .dpp-check,
+#dpp-filter-btn .dpp-check { display: inline-flex; }
 #dpp-btn .dpp-ring { fill: none; stroke: #1e7a4f; stroke-width: 1.6; }
 #dpp-btn .dpp-tick { stroke: #1e7a4f; opacity: 0.35; }
+#dpp-filter-btn .dpp-check { color: #1e7a4f; }
 
-#dpp-btn.dpp-picked {
+#dpp-btn.dpp-picked,
+#dpp-filter-btn.dpp-picked {
   background: #1e7a4f;
   border-color: #1e7a4f;
   color: #ffffff;
 }
 #dpp-btn.dpp-picked .dpp-ring { fill: #ffffff; stroke: #ffffff; }
 #dpp-btn.dpp-picked .dpp-tick { stroke: #1e7a4f; opacity: 1; }
+#dpp-filter-btn.dpp-picked .dpp-check { color: #ffffff; }
 
-#dpp-btn .dpp-count {
+#dpp-btn .dpp-count,
+#dpp-filter-btn .dpp-count {
   min-width: 22px;
   padding: 3px 7px;
   border-radius: 999px;
@@ -72,7 +82,8 @@
   font-weight: 600;
   text-align: center;
 }
-#dpp-btn.dpp-picked .dpp-count {
+#dpp-btn.dpp-picked .dpp-count,
+#dpp-filter-btn.dpp-picked .dpp-count {
   background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
 }
@@ -98,6 +109,10 @@
 }
 
 /* ---------- Grid & List view tick badges ---------- */
+
+html.dpp-hide-unselected [data-target="doc"][data-id].dpp-card-unselected {
+  display: none !important;
+}
 
 [role="gridcell"][data-target="doc"].dpp-card-picked {
   box-shadow: inset 0 0 0 2.5px #1e7a4f !important;

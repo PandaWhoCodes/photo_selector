@@ -60,13 +60,15 @@ button, .file-label {
 }
 button:hover, .file-label:hover { border-color: #b9c7bf; }
 button:focus-visible, .file-label:focus-within { outline: 3px solid #8fd3b2; outline-offset: 1px; }
-button.primary {
+button.primary,
+button.active-toggle {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
   font-weight: 500;
 }
-button.primary:hover { background: #196843; }
+button.primary:hover,
+button.active-toggle:hover { background: #196843; }
 button:disabled { opacity: 0.5; cursor: default; }
 
 .feedback {

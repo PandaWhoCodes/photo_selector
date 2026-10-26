@@ -24,6 +24,7 @@
   let currentId = null;
   let picks = {};
   let pickedNames = new Set();
+  let hideUnselected = false;
   let pendingSaves = 0;
   let ui = null;
 
@@ -38,8 +39,9 @@
   // ---------- storage ----------
 
   async function loadPicks() {
-    const res = await chrome.storage.local.get("picks");
+    const res = await chrome.storage.local.get(["picks", "hideUnselected"]);
     picks = res.picks || {};
+    hideUnselected = Boolean(res.hideUnselected);
     rebuildPickedNames();
   }
 
@@ -53,12 +55,32 @@
     }
   }
 
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes.picks) return;
-    if (pendingSaves > 0) return;
-    picks = changes.picks.newValue || {};
-    rebuildPickedNames();
+  async function toggleHideUnselected() {
+    hideUnselected = !hideUnselected;
     render();
+    pendingSaves++;
+    try {
+      await chrome.storage.local.set({ hideUnselected });
+    } finally {
+      pendingSaves--;
+    }
+    toast(hideUnselected ? "Hiding unselected photos" : "Showing all photos");
+  }
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    if (pendingSaves > 0) return;
+    let changed = false;
+    if (changes.picks) {
+      picks = changes.picks.newValue || {};
+      rebuildPickedNames();
+      changed = true;
+    }
+    if (changes.hideUnselected) {
+      hideUnselected = Boolean(changes.hideUnselected.newValue);
+      changed = true;
+    }
+    if (changed) render();
   });
 
   // ---------- reading the open file ----------
@@ -203,6 +225,9 @@
   }
 
   function renderGridBadges() {
+    if (document.documentElement) {
+      document.documentElement.classList.toggle("dpp-hide-unselected", hideUnselected);
+    }
     const cards = document.querySelectorAll('[data-target="doc"][data-id]');
     for (const card of cards) {
       const id = card.getAttribute("data-id");
@@ -210,6 +235,7 @@
       const name = itemNameFromCard(card);
       const picked = isItemPicked(id, name);
       card.classList.toggle("dpp-card-picked", picked);
+      card.classList.toggle("dpp-card-unselected", !picked);
 
       let badge = card.querySelector(".dpp-grid-badge");
       if (!badge) {
@@ -250,6 +276,16 @@
     const root = document.createElement("div");
     root.id = "dpp-root";
     root.innerHTML = `
+      <button id="dpp-filter-btn" type="button" title="Hide unselected photos in this folder">
+        <span class="dpp-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+        </span>
+        <span class="dpp-filter-label">Hide unselected</span>
+        <span class="dpp-count dpp-filter-count" aria-label="photos selected">0</span>
+      </button>
       <button id="dpp-btn" type="button" title="Select this photo (S)">
         <span class="dpp-check" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="18" height="18">
@@ -259,7 +295,7 @@
           </svg>
         </span>
         <span class="dpp-label">Select</span>
-        <span class="dpp-count" aria-label="photos selected">0</span>
+        <span class="dpp-count dpp-select-count" aria-label="photos selected">0</span>
       </button>
       <div id="dpp-toast" role="status" aria-live="polite"></div>
     `;
@@ -269,6 +305,11 @@
       e.stopPropagation();
       toggle();
     });
+    root.querySelector("#dpp-filter-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleHideUnselected();
+    });
     return root;
   }
 
@@ -277,6 +318,7 @@
     if (!ui) ui = buildUi();
     const id = fileIdFromUrl();
     const inPreview = Boolean(id);
+    const hasFolderItems = Boolean(document.querySelector('[data-target="doc"][data-id]'));
     const toolbar = inPreview ? findToolbar() : null;
     const host = toolbar || document.documentElement;
     if (ui.parentElement !== host) {
@@ -284,6 +326,17 @@
     }
     ui.classList.toggle("dpp-in-toolbar", Boolean(toolbar));
     ui.classList.toggle("dpp-visible", inPreview);
+    ui.classList.toggle("dpp-folder-visible", !inPreview && hasFolderItems);
+
+    const totalPicked = String(Object.keys(picks).length);
+    const filterBtn = ui.querySelector("#dpp-filter-btn");
+    filterBtn.classList.toggle("dpp-picked", hideUnselected);
+    filterBtn.setAttribute("aria-pressed", String(hideUnselected));
+    filterBtn.title = hideUnselected
+      ? "Show all photos in this folder"
+      : "Hide unselected photos in this folder";
+    ui.querySelector(".dpp-filter-count").textContent = totalPicked;
+
     renderGridBadges();
     if (!inPreview) return;
     const picked = Boolean(picks[id]);
@@ -292,7 +345,7 @@
     btn.setAttribute("aria-pressed", String(picked));
     btn.title = picked ? "Unselect this photo (S)" : "Select this photo (S)";
     ui.querySelector(".dpp-label").textContent = picked ? "Selected" : "Select";
-    ui.querySelector(".dpp-count").textContent = String(Object.keys(picks).length);
+    ui.querySelector(".dpp-select-count").textContent = totalPicked;
   }
 
   let toastTimer = null;
@@ -320,6 +373,8 @@
     const toolbar = id ? findToolbar() : null;
     const targetHost = toolbar || document.documentElement;
     if (id === currentId && ui && ui.isConnected && ui.parentElement === targetHost) {
+      const hasFolderItems = Boolean(document.querySelector('[data-target="doc"][data-id]'));
+      ui.classList.toggle("dpp-folder-visible", !id && hasFolderItems);
       renderGridBadges();
       return;
     }

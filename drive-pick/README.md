@@ -15,6 +15,7 @@ Select photos while browsing Google Drive, then copy a list of filenames and lin
 - Click it, or press **S**, to select. Press again to unselect.
 - Move between photos with Drive's own arrows. Already-selected photos show a green **Selected**.
 - In the folder **Grid view** or **List view**, selected photos display a green checkmark badge (and you can click the badge on any thumbnail to select/unselect directly from the folder).
+- Click **Hide unselected** (bottom-right on the folder view or inside the popup) to hide all unpicked photos and see only your selected ones as you scroll.
 - Click the extension icon to see the list. **Copy list** gives `filename  link` per line for WhatsApp/email; **Download CSV** gives a spreadsheet.
 - **Back up** downloads the list as JSON; **Restore** merges one back in.
 

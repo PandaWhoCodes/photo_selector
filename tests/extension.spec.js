@@ -167,7 +167,7 @@ test.describe("Drive Photo Picker Extension", () => {
     await page.keyboard.press("s");
     await expect(btn).toHaveClass(/dpp-picked/);
     await expect(page.locator(".dpp-label")).toHaveText("Selected");
-    await expect(page.locator(".dpp-count")).toHaveText("1");
+    await expect(page.locator("#dpp-btn .dpp-count")).toHaveText("1");
     const starTriggered = await page.evaluate(() => window.__driveStarTriggered);
     expect(starTriggered).toBe(false);
 
@@ -182,12 +182,12 @@ test.describe("Drive Photo Picker Extension", () => {
 
     await expect(btn).not.toHaveClass(/dpp-picked/);
     await expect(page.locator(".dpp-label")).toHaveText("Select");
-    await expect(page.locator(".dpp-count")).toHaveText("1");
+    await expect(page.locator("#dpp-btn .dpp-count")).toHaveText("1");
 
     // Select DSC00002.jpg
     await page.keyboard.press("s");
     await expect(btn).toHaveClass(/dpp-picked/);
-    await expect(page.locator(".dpp-count")).toHaveText("2");
+    await expect(page.locator("#dpp-btn .dpp-count")).toHaveText("2");
 
     // Verify popup has both photos
     const popup = await context.newPage();
@@ -225,6 +225,38 @@ test.describe("Drive Photo Picker Extension", () => {
     await expect(page.locator("#card-1")).not.toHaveClass(/dpp-card-picked/);
     await expect(page.locator("#dpp-toast")).toHaveText("Removed from selection");
     await expect(popup.locator("#headline")).toHaveText("2 photos selected");
+
+    // Test "Hide unselected" button on the folder view
+    const filterBtn = page.locator("#dpp-filter-btn");
+    await expect(filterBtn).toBeVisible();
+    await filterBtn.click();
+    await expect(filterBtn).toHaveClass(/dpp-picked/);
+    await expect(page.locator("#card-1")).toBeHidden();
+    await expect(page.locator("#card-2")).toBeVisible();
+    await expect(page.locator("#card-3")).toBeVisible();
+
+    // Simulate scrolling down and Drive lazy-loading new cards (card-4 unselected, card-5 already selected)
+    await page.evaluate(() => {
+      const main = document.querySelector("main");
+      main.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div id="card-4" role="gridcell" data-target="doc" data-id="1SamplePhoto004" style="width:200px;height:200px;position:relative;">
+          <div data-tooltip="DSC00004.jpg Image">DSC00004.jpg</div>
+        </div>
+        <div id="card-5" role="gridcell" data-target="doc" data-id="1SamplePhoto002" style="width:200px;height:200px;position:relative;">
+          <div data-tooltip="DSC00002.jpg Image">DSC00002.jpg</div>
+        </div>
+      `
+      );
+    });
+    await expect(page.locator("#card-4")).toBeHidden();
+    await expect(page.locator("#card-5")).toBeVisible();
+
+    // Toggle "Hide unselected" off from the popup and verify card-1 & card-4 reappear
+    await popup.locator("#toggle-hide").click();
+    await expect(page.locator("#card-1")).toBeVisible();
+    await expect(page.locator("#card-4")).toBeVisible();
   });
 
   test("2. Injects button into Drive toolbar when present and falls back to floating when absent", async ({
@@ -296,7 +328,7 @@ test.describe("Drive Photo Picker Extension", () => {
 
     const btn = page.locator("#dpp-btn");
     const label = page.locator(".dpp-label");
-    const count = page.locator(".dpp-count");
+    const count = page.locator("#dpp-btn .dpp-count");
     const toast = page.locator("#dpp-toast");
 
     await expect(label).toHaveText("Select");
@@ -359,7 +391,7 @@ test.describe("Drive Photo Picker Extension", () => {
 
     const btn = page.locator("#dpp-btn");
     const label = page.locator(".dpp-label");
-    const count = page.locator(".dpp-count");
+    const count = page.locator("#dpp-btn .dpp-count");
 
     // Select photo 1
     await btn.click();
@@ -482,7 +514,7 @@ test.describe("Drive Photo Picker Extension", () => {
     await popup.locator('button[aria-label="Remove DSC_0417.JPG"]').click();
     await expect(popup.locator("#headline")).toHaveText("2 photos selected");
     await expect(drivePage.locator(".dpp-label")).toHaveText("Select");
-    await expect(drivePage.locator(".dpp-count")).toHaveText("2");
+    await expect(drivePage.locator("#dpp-btn .dpp-count")).toHaveText("2");
 
     // 7. Test Restore with valid backup (restores the removed DSC_0417.JPG)
     await popup.locator("#restore").setInputFiles(backupPath);
@@ -508,7 +540,7 @@ test.describe("Drive Photo Picker Extension", () => {
     await popup.locator("#clear").click();
     await expect(popup.locator("#headline")).toHaveText("No photos selected yet");
     await expect(popup.locator("#feedback")).toHaveText("Cleared");
-    await expect(drivePage.locator(".dpp-count")).toHaveText("0");
+    await expect(drivePage.locator("#dpp-btn .dpp-count")).toHaveText("0");
   });
 
   test("7. Bulk scale test: selects 300 photos and exports all 300 to CSV and clipboard without data loss", async ({
@@ -542,7 +574,7 @@ test.describe("Drive Photo Picker Extension", () => {
       await page.keyboard.press("s");
     }
 
-    await expect(page.locator(".dpp-count")).toHaveText(String(TOTAL));
+    await expect(page.locator("#dpp-btn .dpp-count")).toHaveText(String(TOTAL));
     await expect(page.locator(".dpp-label")).toHaveText("Selected");
 
     // Verify extension toolbar badge shows "300"

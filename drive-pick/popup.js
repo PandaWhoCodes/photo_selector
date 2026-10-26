@@ -1,6 +1,7 @@
 const $ = (sel) => document.querySelector(sel);
 
 let picks = {};
+let hideUnselected = false;
 let pendingSaves = 0;
 
 async function savePicks() {
@@ -13,8 +14,9 @@ async function savePicks() {
 }
 
 async function load() {
-  const res = await chrome.storage.local.get("picks");
+  const res = await chrome.storage.local.get(["picks", "hideUnselected"]);
   picks = res.picks || {};
+  hideUnselected = Boolean(res.hideUnselected);
   render();
 }
 
@@ -37,6 +39,12 @@ function render() {
   $("#csv").disabled = n === 0;
   $("#backup").disabled = n === 0;
   $("#clear").disabled = n === 0;
+
+  const hideBtn = $("#toggle-hide");
+  if (hideBtn) {
+    hideBtn.classList.toggle("active-toggle", hideUnselected);
+    hideBtn.setAttribute("aria-pressed", String(hideUnselected));
+  }
 
   const list = $("#list");
   list.textContent = "";
@@ -172,19 +180,38 @@ $("#restore").addEventListener("change", async (e) => {
   e.target.value = "";
 });
 
+$("#toggle-hide").addEventListener("click", async () => {
+  hideUnselected = !hideUnselected;
+  render();
+  pendingSaves++;
+  try {
+    await chrome.storage.local.set({ hideUnselected });
+  } finally {
+    pendingSaves--;
+  }
+  say(hideUnselected ? "Hiding unselected in Drive" : "Showing all photos in Drive");
+});
+
 $("#clear").addEventListener("click", async () => {
   const n = Object.keys(picks).length;
   if (!confirm(`Remove all ${n} selected photos? Download a backup first if unsure.`)) return;
   picks = {};
+  hideUnselected = false;
   render();
-  await savePicks();
+  pendingSaves++;
+  try {
+    await chrome.storage.local.set({ picks, hideUnselected });
+  } finally {
+    pendingSaves--;
+  }
   say("Cleared");
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.picks) {
+  if (area === "local") {
     if (pendingSaves > 0) return;
-    picks = changes.picks.newValue || {};
+    if (changes.picks) picks = changes.picks.newValue || {};
+    if (changes.hideUnselected) hideUnselected = Boolean(changes.hideUnselected.newValue);
     render();
   }
 });
