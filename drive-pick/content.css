@@ -1,0 +1,96 @@
+#dpp-root {
+  position: fixed;
+  right: 24px;
+  bottom: 28px;
+  z-index: 2147483647;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color-scheme: light;
+}
+#dpp-root.dpp-visible { display: flex; }
+#dpp-root.dpp-in-toolbar {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 8px;
+}
+#dpp-root.dpp-in-toolbar.dpp-visible { display: inline-flex; }
+#dpp-root.dpp-in-toolbar #dpp-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 28px;
+  z-index: 2147483647;
+}
+
+#dpp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 12px;
+  border: 1.5px solid #c9d6cf;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2a24;
+  font: inherit;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(20, 40, 30, 0.18);
+  transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
+}
+#dpp-btn:hover { border-color: #1e7a4f; }
+#dpp-btn:active { transform: scale(0.97); }
+#dpp-btn:focus-visible { outline: 3px solid #8fd3b2; outline-offset: 2px; }
+
+#dpp-btn .dpp-check { display: inline-flex; }
+#dpp-btn .dpp-ring { fill: none; stroke: #1e7a4f; stroke-width: 1.6; }
+#dpp-btn .dpp-tick { stroke: #1e7a4f; opacity: 0.35; }
+
+#dpp-btn.dpp-picked {
+  background: #1e7a4f;
+  border-color: #1e7a4f;
+  color: #ffffff;
+}
+#dpp-btn.dpp-picked .dpp-ring { fill: #ffffff; stroke: #ffffff; }
+#dpp-btn.dpp-picked .dpp-tick { stroke: #1e7a4f; opacity: 1; }
+
+#dpp-btn .dpp-count {
+  min-width: 22px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef5f1;
+  color: #1e7a4f;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+#dpp-btn.dpp-picked .dpp-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+#dpp-toast {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1f2a24;
+  color: #ffffff;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+#dpp-toast.dpp-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #dpp-btn, #dpp-toast { transition: none; }
+}

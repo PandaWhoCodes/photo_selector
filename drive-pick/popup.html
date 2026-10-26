@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Selected photos</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="top">
+    <h1 id="headline">Loading…</h1>
+    <p class="hint">Open a photo in Drive and press <kbd>S</kbd> to select it.</p>
+  </header>
+
+  <div class="actions">
+    <button id="copy" type="button" class="primary">Copy list</button>
+    <button id="csv" type="button">Download CSV</button>
+  </div>
+
+  <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+  <ul id="list" class="list"></ul>
+
+  <footer class="bottom">
+    <button id="backup" type="button" class="quiet">Back up</button>
+    <label class="quiet file-label">Restore<input id="restore" type="file" accept="application/json"></label>
+    <button id="clear" type="button" class="quiet danger">Clear all</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

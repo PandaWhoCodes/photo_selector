@@ -1,0 +1,24 @@
+{
+  "name": "photo_selector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PandaWhoCodes/photo_selector.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PandaWhoCodes/photo_selector/issues"
+  },
+  "homepage": "https://github.com/PandaWhoCodes/photo_selector#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.62.0"
+  }
+}
