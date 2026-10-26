@@ -481,4 +481,89 @@ test.describe("Drive Photo Picker Extension", () => {
     await expect(popup.locator("#feedback")).toHaveText("Cleared");
     await expect(drivePage.locator(".dpp-count")).toHaveText("0");
   });
+
+  test("7. Bulk scale test: selects 300 photos and exports all 300 to CSV and clipboard without data loss", async ({
+    context,
+    extensionId,
+  }) => {
+    const TOTAL = 300;
+    const page = await context.newPage();
+    await page.goto("https://drive.google.com/drive/folders/1SampleFolderAbc123");
+
+    // Open the viewer dialog
+    await page.evaluate(() => {
+      const dialog = document.getElementById("viewer-dialog");
+      dialog.setAttribute("aria-hidden", "false");
+      dialog.style.visibility = "visible";
+    });
+
+    // Step through 300 photos in reverse order (300 down to 1) and press 'S' on each
+    for (let i = TOTAL; i >= 1; i--) {
+      const padded = String(i).padStart(4, "0");
+      await page.evaluate(
+        ({ id, title }) => {
+          document.getElementById("drive-active-item-info").textContent = JSON.stringify({
+            id,
+            title,
+            mimeType: "image/jpeg",
+          });
+        },
+        { id: `id_photo_${padded}`, title: `DSC_${padded}.JPG` }
+      );
+      await page.keyboard.press("s");
+    }
+
+    await expect(page.locator(".dpp-count")).toHaveText(String(TOTAL));
+    await expect(page.locator(".dpp-label")).toHaveText("Selected");
+
+    // Verify extension toolbar badge shows "300"
+    const [sw] = context.serviceWorkers();
+    await expect
+      .poll(() => sw.evaluate(() => chrome.action.getBadgeText({})))
+      .toBe(String(TOTAL));
+
+    // Open popup and verify all 300 photos are listed and sorted DSC_0001.JPG .. DSC_0300.JPG
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+    await expect(popup.locator("#headline")).toHaveText(`${TOTAL} photos selected`);
+    await expect(popup.locator("#list li")).toHaveCount(TOTAL);
+
+    const firstLinkText = await popup.locator("#list li a").first().textContent();
+    const lastLinkText = await popup.locator("#list li a").last().textContent();
+    expect(firstLinkText).toBe("DSC_0001.JPG");
+    expect(lastLinkText).toBe("DSC_0300.JPG");
+
+    // Verify Copy list with 300 photos
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await popup.bringToFront();
+    await popup.locator("#copy").click();
+    await expect(popup.locator("#feedback")).toHaveText(`Copied ${TOTAL} lines`);
+    const copiedLines = (await popup.evaluate(() => navigator.clipboard.readText())).split("\n");
+    expect(copiedLines[0]).toBe(`Selected photos — ${TOTAL}`);
+    expect(copiedLines.length).toBe(TOTAL + 2);
+    expect(copiedLines[2]).toBe("DSC_0001.JPG  https://drive.google.com/file/d/id_photo_0001/view");
+    expect(copiedLines[TOTAL + 1]).toBe(
+      "DSC_0300.JPG  https://drive.google.com/file/d/id_photo_0300/view"
+    );
+
+    // Export CSV and verify all 300 rows exist and are valid
+    const csvDownloadPromise = popup.waitForEvent("download");
+    await popup.locator("#csv").click();
+    const csvDownload = await csvDownloadPromise;
+    const csvPath = await csvDownload.path();
+    const csvContent = fs.readFileSync(csvPath, "utf8");
+    const csvRows = csvContent.split("\r\n");
+
+    expect(csvRows.length).toBe(TOTAL + 1);
+    expect(csvRows[0]).toBe("filename,drive_link,picked_at");
+
+    for (let i = 1; i <= TOTAL; i++) {
+      const padded = String(i).padStart(4, "0");
+      expect(csvRows[i]).toMatch(
+        new RegExp(
+          `^"DSC_${padded}\\.JPG","https://drive\\.google\\.com/file/d/id_photo_${padded}/view","\\d{4}-\\d{2}-\\d{2}T`
+        )
+      );
+    }
+  });
 });

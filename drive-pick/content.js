@@ -23,6 +23,7 @@
 
   let currentId = null;
   let picks = {};
+  let pendingSaves = 0;
   let ui = null;
 
   // ---------- storage ----------
@@ -33,11 +34,17 @@
   }
 
   async function savePicks() {
-    await chrome.storage.local.set({ picks });
+    pendingSaves++;
+    try {
+      await chrome.storage.local.set({ picks });
+    } finally {
+      pendingSaves--;
+    }
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !changes.picks) return;
+    if (pendingSaves > 0) return;
     picks = changes.picks.newValue || {};
     render();
   });

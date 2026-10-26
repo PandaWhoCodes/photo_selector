@@ -1,6 +1,16 @@
 const $ = (sel) => document.querySelector(sel);
 
 let picks = {};
+let pendingSaves = 0;
+
+async function savePicks() {
+  pendingSaves++;
+  try {
+    await chrome.storage.local.set({ picks });
+  } finally {
+    pendingSaves--;
+  }
+}
 
 async function load() {
   const res = await chrome.storage.local.get("picks");
@@ -58,8 +68,8 @@ function render() {
 
 async function remove(id) {
   delete picks[id];
-  await chrome.storage.local.set({ picks });
   render();
+  await savePicks();
   say("Removed");
 }
 
@@ -153,7 +163,7 @@ $("#restore").addEventListener("change", async (e) => {
         added++;
       }
     }
-    await chrome.storage.local.set({ picks });
+    await savePicks();
     render();
     say(added ? `Restored ${added} photo${added === 1 ? "" : "s"}` : "Nothing new to restore");
   } catch {
@@ -166,13 +176,14 @@ $("#clear").addEventListener("click", async () => {
   const n = Object.keys(picks).length;
   if (!confirm(`Remove all ${n} selected photos? Download a backup first if unsure.`)) return;
   picks = {};
-  await chrome.storage.local.set({ picks });
   render();
+  await savePicks();
   say("Cleared");
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.picks) {
+    if (pendingSaves > 0) return;
     picks = changes.picks.newValue || {};
     render();
   }
