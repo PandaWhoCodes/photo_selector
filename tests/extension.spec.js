@@ -39,7 +39,17 @@ const test = base.extend({
 </head>
 <body>
   <div role="toolbar" style="height:40px;width:400px;">Folder Toolbar</div>
-  <main>Folder Grid View</main>
+  <main>
+    <div id="card-1" role="gridcell" data-target="doc" data-id="1SamplePhoto001" style="width:200px;height:200px;position:relative;">
+      <div data-tooltip="DSC00001.jpg Image">DSC00001.jpg</div>
+    </div>
+    <div id="card-2" role="gridcell" data-target="doc" data-id="1SamplePhoto002" style="width:200px;height:200px;position:relative;">
+      <div data-tooltip="DSC00002.jpg Image">DSC00002.jpg</div>
+    </div>
+    <div id="card-3" role="gridcell" data-target="doc" data-id="1SamplePhoto003" style="width:200px;height:200px;position:relative;">
+      <div data-tooltip="DSC00003.jpg Image">DSC00003.jpg</div>
+    </div>
+  </main>
   <div id="viewer-dialog" role="dialog" aria-label="Showing viewer." aria-hidden="true" style="visibility:hidden;">
     <div role="main">
       <div id="drive-active-item-info"></div>
@@ -187,7 +197,7 @@ test.describe("Drive Photo Picker Extension", () => {
       "DSC00002.jpg",
     ]);
 
-    // Close viewer dialog (Escape): button hides again
+    // Close viewer dialog (Escape): button hides again, and grid cards show picked state!
     await page.bringToFront();
     await page.evaluate(() => {
       const dialog = document.getElementById("viewer-dialog");
@@ -196,6 +206,25 @@ test.describe("Drive Photo Picker Extension", () => {
       document.getElementById("drive-active-item-info").textContent = "";
     });
     await expect(root).not.toHaveClass(/dpp-visible/);
+
+    // Verify grid view cards 1 and 2 have tick badges marked picked, while card 3 is unpicked
+    await expect(page.locator("#card-1")).toHaveClass(/dpp-card-picked/);
+    await expect(page.locator("#card-1 .dpp-grid-badge")).toHaveClass(/dpp-grid-badge-picked/);
+    await expect(page.locator("#card-2")).toHaveClass(/dpp-card-picked/);
+    await expect(page.locator("#card-3")).not.toHaveClass(/dpp-card-picked/);
+
+    // Click the tick badge directly on card 3 in the grid view to select DSC00003.jpg
+    await page.locator("#card-3 .dpp-grid-badge").click();
+    await expect(page.locator("#card-3")).toHaveClass(/dpp-card-picked/);
+    await expect(page.locator("#card-3 .dpp-grid-badge")).toHaveClass(/dpp-grid-badge-picked/);
+    await expect(page.locator("#dpp-toast")).toHaveText("Selected · 3");
+    await expect(popup.locator("#headline")).toHaveText("3 photos selected");
+
+    // Click the tick badge on card 1 to unselect DSC00001.jpg directly from the grid view
+    await page.locator("#card-1 .dpp-grid-badge").click();
+    await expect(page.locator("#card-1")).not.toHaveClass(/dpp-card-picked/);
+    await expect(page.locator("#dpp-toast")).toHaveText("Removed from selection");
+    await expect(popup.locator("#headline")).toHaveText("2 photos selected");
   });
 
   test("2. Injects button into Drive toolbar when present and falls back to floating when absent", async ({

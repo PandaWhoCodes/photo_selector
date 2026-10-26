@@ -10,6 +10,7 @@ Google Drive is built for managing files, not culling photos: thumbnails are sma
 
 - **Zero setup, zero backend:** No Google Cloud project, no OAuth, and no Drive API. It reads the active photo's filename and file ID directly from the Google Drive page you are viewing.
 - **One-key picking:** Press **`S`** (or click the **Select** button) inside Drive's photo preview to mark or unmark a photo, with a live running counter (`Selected · 113`) and toolbar badge.
+- **Macro Grid & List view ticks:** Selected photos show a green checkmark badge and border right on their thumbnails in Drive's folder **Grid view** (and next to rows in **List view**). You can also hover any thumbnail and click the tick badge to select/unselect directly from the folder view without opening the preview.
 - **Works across sessions & folders:** Selections are saved locally in Chrome (`chrome.storage.local`), so you can pick across multiple shared folders over several evenings.
 - **Photographer-ready exports:**
   - **Copy list:** Copies `filename  drive_link` (sorted in natural shoot order, e.g. `DSC_0001.JPG` before `DSC_0002.JPG`) ready to paste into WhatsApp or email.

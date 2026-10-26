@@ -23,17 +23,28 @@
 
   let currentId = null;
   let picks = {};
+  let pickedNames = new Set();
   let pendingSaves = 0;
   let ui = null;
+
+  function rebuildPickedNames() {
+    pickedNames = new Set(
+      Object.values(picks)
+        .map((p) => p?.name)
+        .filter(Boolean)
+    );
+  }
 
   // ---------- storage ----------
 
   async function loadPicks() {
     const res = await chrome.storage.local.get("picks");
     picks = res.picks || {};
+    rebuildPickedNames();
   }
 
   async function savePicks() {
+    rebuildPickedNames();
     pendingSaves++;
     try {
       await chrome.storage.local.set({ picks });
@@ -46,6 +57,7 @@
     if (area !== "local" || !changes.picks) return;
     if (pendingSaves > 0) return;
     picks = changes.picks.newValue || {};
+    rebuildPickedNames();
     render();
   });
 
@@ -133,23 +145,102 @@
 
   // ---------- toggle ----------
 
-  async function toggle() {
-    const id = fileIdFromUrl();
+  function findPickedId(id, name) {
+    if (id && picks[id]) return id;
+    if (name && name !== "(unnamed file)") {
+      for (const [k, p] of Object.entries(picks)) {
+        if (p?.name === name) return k;
+      }
+    }
+    return null;
+  }
+
+  async function toggleByIdAndName(id, name) {
     if (!id) return;
-    if (picks[id]) {
-      delete picks[id];
+    const existingId = findPickedId(id, name);
+    if (existingId) {
+      delete picks[existingId];
       render();
       await savePicks();
       toast("Removed from selection");
     } else {
       picks[id] = {
-        name: fileName(),
+        name: name || "(unnamed file)",
         url: fileUrl(id),
         pickedAt: new Date().toISOString(),
       };
       render();
       await savePicks();
       toast(`Selected · ${Object.keys(picks).length}`);
+    }
+  }
+
+  async function toggle() {
+    const id = fileIdFromUrl();
+    if (!id) return;
+    await toggleByIdAndName(id, fileName());
+  }
+
+  // ---------- grid / list view badges ----------
+
+  function itemNameFromCard(card) {
+    const strong = card.querySelector("strong");
+    if (strong?.textContent?.trim()) return strong.textContent.trim();
+    const tipEl = card.querySelector("[data-tooltip]");
+    const tipText = tipEl?.textContent?.trim();
+    if (tipText) return tipText;
+    const rawTip = tipEl
+      ?.getAttribute("data-tooltip")
+      ?.replace(/\s+(Image|Binary|Video|Audio)$/i, "")
+      .trim();
+    return rawTip || "(unnamed file)";
+  }
+
+  function isItemPicked(id, name) {
+    if (id && picks[id]) return true;
+    if (name && name !== "(unnamed file)" && pickedNames.has(name)) return true;
+    return false;
+  }
+
+  function renderGridBadges() {
+    const cards = document.querySelectorAll('[data-target="doc"][data-id]');
+    for (const card of cards) {
+      const id = card.getAttribute("data-id");
+      if (!id) continue;
+      const name = itemNameFromCard(card);
+      const picked = isItemPicked(id, name);
+      card.classList.toggle("dpp-card-picked", picked);
+
+      let badge = card.querySelector(".dpp-grid-badge");
+      if (!badge) {
+        badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = "dpp-grid-badge";
+        badge.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" class="dpp-grid-ring"></circle>
+            <path d="M7.2 12.5l3.1 3.1L16.8 9" class="dpp-grid-tick" fill="none" stroke-width="2.4"
+                  stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        `;
+        const stop = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+        badge.addEventListener("mousedown", stop);
+        badge.addEventListener("dblclick", stop);
+        badge.addEventListener("click", (e) => {
+          stop(e);
+          const cardId = card.getAttribute("data-id");
+          const cardName = itemNameFromCard(card);
+          toggleByIdAndName(cardId, cardName);
+        });
+        const host = card.tagName === "TR" ? card.querySelector("td") || card : card;
+        host.appendChild(badge);
+      }
+      badge.classList.toggle("dpp-grid-badge-picked", picked);
+      badge.setAttribute("aria-pressed", String(picked));
+      badge.title = picked ? `Selected: ${name} (click to unselect)` : `Select ${name}`;
     }
   }
 
@@ -193,6 +284,7 @@
     }
     ui.classList.toggle("dpp-in-toolbar", Boolean(toolbar));
     ui.classList.toggle("dpp-visible", inPreview);
+    renderGridBadges();
     if (!inPreview) return;
     const picked = Boolean(picks[id]);
     const btn = ui.querySelector("#dpp-btn");
@@ -227,7 +319,10 @@
     }
     const toolbar = id ? findToolbar() : null;
     const targetHost = toolbar || document.documentElement;
-    if (id === currentId && ui && ui.isConnected && ui.parentElement === targetHost) return;
+    if (id === currentId && ui && ui.isConnected && ui.parentElement === targetHost) {
+      renderGridBadges();
+      return;
+    }
     currentId = id;
     render();
   }

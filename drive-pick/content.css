@@ -3,15 +3,15 @@
   right: 24px;
   bottom: 28px;
   z-index: 2147483647;
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
   color-scheme: light;
+  pointer-events: none;
 }
-#dpp-root.dpp-visible { display: flex; }
 #dpp-root.dpp-in-toolbar {
   position: relative;
   right: auto;
@@ -29,7 +29,8 @@
 }
 
 #dpp-btn {
-  display: inline-flex;
+  display: none;
+  pointer-events: auto;
   align-items: center;
   gap: 10px;
   padding: 10px 14px 10px 12px;
@@ -44,6 +45,7 @@
   box-shadow: 0 6px 20px rgba(20, 40, 30, 0.18);
   transition: background 140ms ease, border-color 140ms ease, transform 100ms ease;
 }
+#dpp-root.dpp-visible #dpp-btn { display: inline-flex; }
 #dpp-btn:hover { border-color: #1e7a4f; }
 #dpp-btn:active { transform: scale(0.97); }
 #dpp-btn:focus-visible { outline: 3px solid #8fd3b2; outline-offset: 2px; }
@@ -93,4 +95,85 @@
 
 @media (prefers-reduced-motion: reduce) {
   #dpp-btn, #dpp-toast { transition: none; }
+}
+
+/* ---------- Grid & List view tick badges ---------- */
+
+[role="gridcell"][data-target="doc"].dpp-card-picked {
+  box-shadow: inset 0 0 0 2.5px #1e7a4f !important;
+}
+
+tr[data-target="doc"].dpp-card-picked > td:first-child {
+  box-shadow: inset 3px 0 0 0 #1e7a4f;
+}
+
+tr[data-target="doc"] > td:first-child {
+  position: relative;
+}
+
+.dpp-grid-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1.5px solid rgba(30, 122, 79, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+tr[data-target="doc"] .dpp-grid-badge {
+  right: 12px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%) scale(0.92);
+}
+
+[data-target="doc"]:hover .dpp-grid-badge,
+.dpp-grid-badge:focus-visible,
+.dpp-grid-badge.dpp-grid-badge-picked {
+  opacity: 1;
+  transform: scale(1);
+}
+
+tr[data-target="doc"]:hover .dpp-grid-badge,
+tr[data-target="doc"] .dpp-grid-badge:focus-visible,
+tr[data-target="doc"] .dpp-grid-badge.dpp-grid-badge-picked {
+  transform: translateY(-50%) scale(1);
+}
+
+.dpp-grid-badge .dpp-grid-ring {
+  fill: none;
+  stroke: #1e7a4f;
+  stroke-width: 1.6;
+}
+
+.dpp-grid-badge .dpp-grid-tick {
+  stroke: #1e7a4f;
+  opacity: 0.45;
+}
+
+.dpp-grid-badge.dpp-grid-badge-picked {
+  background: #1e7a4f;
+  border-color: #ffffff;
+}
+
+.dpp-grid-badge.dpp-grid-badge-picked .dpp-grid-ring {
+  fill: #1e7a4f;
+  stroke: #1e7a4f;
+}
+
+.dpp-grid-badge.dpp-grid-badge-picked .dpp-grid-tick {
+  stroke: #ffffff;
+  opacity: 1;
 }
