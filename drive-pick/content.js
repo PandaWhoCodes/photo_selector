@@ -270,6 +270,55 @@
     }
   }
 
+  let selectingInDrive = false;
+
+  async function selectVisiblePickedInDrive() {
+    if (selectingInDrive) return;
+    const pickedCards = [
+      ...document.querySelectorAll('[data-target="doc"][data-id].dpp-card-picked'),
+    ];
+    if (pickedCards.length === 0) {
+      toast("No selected photos visible in this folder");
+      return;
+    }
+    selectingInDrive = true;
+    toast(`Selecting ${pickedCards.length} photo${pickedCards.length === 1 ? "" : "s"} in Drive…`);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    try {
+      for (let i = 0; i < pickedCards.length; i++) {
+        const el = pickedCards[i];
+        el.scrollIntoView({ block: "nearest" });
+        const r = el.getBoundingClientRect();
+        const x = r.left + 20;
+        const y = r.top + 20;
+        const hit = document.elementFromPoint(x, y);
+        const target =
+          hit && el.contains(hit) && !hit.closest(".dpp-grid-badge")
+            ? hit
+            : el.querySelector("td, div") || el;
+        const mod = i > 0;
+        const opts = {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: x,
+          clientY: y,
+          button: 0,
+          metaKey: mod,
+          ctrlKey: mod,
+        };
+        target.dispatchEvent(new MouseEvent("mousedown", { ...opts, buttons: 1 }));
+        await sleep(18);
+        target.dispatchEvent(new MouseEvent("mouseup", { ...opts, buttons: 0 }));
+        target.dispatchEvent(new MouseEvent("click", { ...opts, buttons: 0 }));
+        await sleep(18);
+      }
+      toast(`${pickedCards.length} selected in Drive — click Download in Drive's top bar`);
+    } finally {
+      selectingInDrive = false;
+    }
+  }
+
   // ---------- UI ----------
 
   function buildUi() {
@@ -424,11 +473,29 @@
   }
 
   // Register in capture phase at document_start so we run before Drive's own
-  // 's' = Star shortcut handler when a photo preview is open.
+  // 's' = Star and 'Cmd+A' = Select All shortcut handlers.
   for (const type of ["keydown", "keypress", "keyup"]) {
     window.addEventListener(
       type,
       (e) => {
+        if (
+          hideUnselected &&
+          !fileIdFromUrl() &&
+          (e.metaKey || e.ctrlKey) &&
+          !e.altKey &&
+          !e.shiftKey &&
+          (e.key === "a" || e.key === "A")
+        ) {
+          if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          if (type === "keydown" && !e.repeat) {
+            selectVisiblePickedInDrive();
+          }
+          return;
+        }
+
         if (!fileIdFromUrl()) return;
         if (e.altKey || e.ctrlKey || e.metaKey) return;
         if (e.key !== "s" && e.key !== "S") return;

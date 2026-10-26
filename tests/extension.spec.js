@@ -253,6 +253,22 @@ test.describe("Drive Photo Picker Extension", () => {
     await expect(page.locator("#card-4")).toBeHidden();
     await expect(page.locator("#card-5")).toBeVisible();
 
+    // Test Cmd+A while "Hide unselected" is active: selects ONLY visible picked cards (card-2, card-3, card-5)
+    await page.evaluate(() => {
+      window.__clickedIds = [];
+      document.querySelectorAll('[data-target="doc"]').forEach((el) => {
+        el.addEventListener("click", (e) => {
+          window.__clickedIds.push({ id: el.id, meta: e.metaKey, ctrl: e.ctrlKey });
+        });
+      });
+    });
+    await page.keyboard.press("Meta+a");
+    await expect(page.locator("#dpp-toast")).toHaveText(
+      "3 selected in Drive — click Download in Drive's top bar"
+    );
+    const clickedInDrive = await page.evaluate(() => window.__clickedIds);
+    expect(clickedInDrive.map((x) => x.id)).toEqual(["card-2", "card-3", "card-5"]);
+
     // Toggle "Hide unselected" off from the popup and verify card-1 & card-4 reappear
     await popup.locator("#toggle-hide").click();
     await expect(page.locator("#card-1")).toBeVisible();
