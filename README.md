@@ -8,15 +8,31 @@ Google Drive is built for managing files, not culling photos: thumbnails are sma
 
 ## Features
 
-- **Zero setup, zero backend:** No Google Cloud project, no OAuth, and no Drive API. It reads the active photo's filename and file ID directly from the Google Drive page you are viewing.
-- **One-key picking:** Press **`S`** (or click the **Select** button) inside Drive's photo preview to mark or unmark a photo, with a live running counter (`Selected · 113`) and toolbar badge.
-- **Macro Grid & List view ticks:** Selected photos show a green checkmark badge and border right on their thumbnails in Drive's folder **Grid view** (and next to rows in **List view**). You can also hover any thumbnail and click the tick badge to select/unselect directly from the folder view without opening the preview.
-- **Hide unselected filter:** Click **Hide unselected** (floating bottom-right on the folder view or inside the extension popup) to hide all unpicked photos and review only your selections — automatically filtering newly loaded images as you scroll down. While **Hide unselected** is active, pressing **`Cmd + A` / `Ctrl + A`** selects *only* your visible picked photos in Google Drive so you can click Drive's **Download** button to download just your selected photos.
-- **Works across sessions & folders:** Selections are saved locally in Chrome (`chrome.storage.local`), so you can pick across multiple shared folders over several evenings.
-- **Photographer-ready exports:**
-  - **Copy list:** Copies `filename  drive_link` (sorted in natural shoot order, e.g. `DSC_0001.JPG` before `DSC_0002.JPG`) ready to paste into WhatsApp or email.
-  - **Download CSV:** Exports `wedding-selection-YYYY-MM-DD.csv` with `filename,drive_link,picked_at`.
-  - **Back up & Restore:** Export or merge selections as a `.json` backup file at any time.
+### 1. One-Key Photo Picking in Preview (`S`)
+Press **`S`** (or click the **Select** button) inside Google Drive's full-screen photo preview to mark or unmark a photo, with a live running counter (`Selected · 4`) and toolbar badge. Flip through photos with **`←` / `→`** and any photo you've already picked automatically shows its green **Selected** state.
+
+![Full-screen photo preview with Selected button](docs/screenshots/preview-selected.png)
+
+### 2. Macro Grid & List View Checkmarks
+Selected photos display a green checkmark badge and green border right on their thumbnails in Drive's folder **Grid view** (and next to rows in **List view**). You can also hover any photo card and click the checkmark badge to select or unselect directly from the folder view without opening the preview.
+
+![Folder grid view with green checkmark badges on selected photos](docs/screenshots/grid-macro-view.png)
+
+### 3. Hide Unselected Filter & Bulk Download (`Cmd + A`)
+Click **Hide unselected** (floating bottom-right on the folder view or inside the extension popup) to hide all unpicked photos while keeping sub-folders visible — automatically filtering newly loaded images as you scroll down.
+While **Hide unselected** is active, pressing **`Cmd + A` / `Ctrl + A`** selects *only* your visible picked photos in Google Drive so you can click Drive's **Download** button to download just your selected photos.
+
+![Folder grid view filtered with Hide unselected active](docs/screenshots/grid-hide-unselected.png)
+
+### 4. Photographer-Ready Exports & Local Persistence
+All picks are saved locally in Chrome (`chrome.storage.local`) across folders and sessions — zero setup, zero OAuth, and no backend required.
+- **Copy list:** Copies `filename  drive_link` (sorted in natural shoot order, e.g. `DSC_0001.JPG` before `DSC_0002.JPG`) ready to paste into WhatsApp or email.
+- **Download CSV:** Exports `wedding-selection-YYYY-MM-DD.csv` with `filename,drive_link,picked_at`.
+- **Back up & Restore:** Export or merge selections as a `.json` backup file at any time.
+
+<p align="center">
+  <img src="docs/screenshots/popup-export.png" alt="Drive Photo Picker extension popup" width="420" />
+</p>
 
 ---
 
