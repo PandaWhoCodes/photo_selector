@@ -40,6 +40,9 @@ const test = base.extend({
 <body>
   <div role="toolbar" style="height:40px;width:400px;">Folder Toolbar</div>
   <main>
+    <div id="folder-c1" role="gridcell" data-target="doc" data-id="1SampleFolderC1" aria-label="C1 Shared folder More info" style="width:200px;height:60px;position:relative;">
+      <div data-tooltip="C1 Shared folder">C1</div>
+    </div>
     <div id="card-1" role="gridcell" data-target="doc" data-id="1SamplePhoto001" style="width:200px;height:200px;position:relative;">
       <div data-tooltip="DSC00001.jpg Image">DSC00001.jpg</div>
     </div>
@@ -231,6 +234,9 @@ test.describe("Drive Photo Picker Extension", () => {
     await expect(filterBtn).toBeVisible();
     await filterBtn.click();
     await expect(filterBtn).toHaveClass(/dpp-picked/);
+    // Folders must remain visible even when "Hide unselected" is active!
+    await expect(page.locator("#folder-c1")).toBeVisible();
+    await expect(page.locator("#folder-c1 .dpp-grid-badge")).toHaveCount(0);
     await expect(page.locator("#card-1")).toBeHidden();
     await expect(page.locator("#card-2")).toBeVisible();
     await expect(page.locator("#card-3")).toBeVisible();

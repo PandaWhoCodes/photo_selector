@@ -224,12 +224,28 @@
     return false;
   }
 
+  function isFolderCard(card) {
+    if (card.getAttribute("data-target") === "folder") return true;
+    if (card.closest('[aria-label="Folders" i], [data-target="folder"]')) return true;
+    const cardAria = card.getAttribute("aria-label") || "";
+    if (/\bfolder\b/i.test(cardAria)) return true;
+    const tip = card.querySelector("[data-tooltip]")?.getAttribute("data-tooltip") || "";
+    if (/\bfolder$/i.test(tip.trim())) return true;
+    const firstAria = card.querySelector("[aria-label]")?.getAttribute("aria-label") || "";
+    if (/\bfolder\b/i.test(firstAria)) return true;
+    return false;
+  }
+
   function renderGridBadges() {
     if (document.documentElement) {
       document.documentElement.classList.toggle("dpp-hide-unselected", hideUnselected);
     }
     const cards = document.querySelectorAll('[data-target="doc"][data-id]');
     for (const card of cards) {
+      if (isFolderCard(card)) {
+        card.classList.remove("dpp-card-picked", "dpp-card-unselected");
+        continue;
+      }
       const id = card.getAttribute("data-id");
       if (!id) continue;
       const name = itemNameFromCard(card);
